@@ -8,16 +8,15 @@ import spock.lang.Unroll
 
 class UserServiceImplSpec extends Specification {
 
-//        def UserServiceMock = Mock(UserServiceImpl)
         UserDetails userDetails = Stub()
 
-        User user = new User(1, "Divya", "Test123", 1, userDetails)
-        User user1 = new User(2, "Bala", "Test123", 1, userDetails)
-        User user2 = new User(3, "Divya", "Test123", 1, userDetails)
-        User user3 = new User(4, "Bala", "Test@123", 1, userDetails)
-        User user4 = new User(5, "Sri", "Test@123", 1, userDetails)
+        User user1 = new User(1, "Divya", "Test123", 1, userDetails)
+        User user2 = new User(2, "Bala", "Test123", 1, userDetails)
+        User user3 = new User(3, "Sri", "Test123", 1, userDetails)
+        /*User user3 = new User(4, "Bala", "Test@123", 1, userDetails)
+        User user4 = new User(5, "Sri", "Test@123", 1, userDetails)*/
 
-        UserServiceImpl userServiceStub = Mock()
+//        UserServiceImpl userServiceStub = Mock()
     def UserServiceMock
 
     void setup() {
@@ -25,35 +24,82 @@ class UserServiceImplSpec extends Specification {
         UserServiceMock.userRepository= Mock(UserRepository)
     }
 
-  /*  def "Check"(){ //need to check with Spy
-        given:
-        User user1=Stub()
-        User user2=Stub()
-        user1.getUserName() >> "Divya"
-        user2.setUserName("Divya")
+    def "Check get all users"(){
+       /* given:
+        UserServiceMock.userRepository.findAll() >> [user1,user2,user3]*/
 
         when:
-        UserServiceMock.getAllUsers()
-        UserServiceMock.checkExistUser(user2)
+        def users = UserServiceMock.getAllUsers()
 
         then:
-        1*UserServiceMock.getAllUsers() >> [user1]
+        1*UserServiceMock.userRepository.findAll() >> [user1,user2,user3]
+        users == [user1,user2,user3]
+
+    }
+
+    def "Check get user by Id"(){
+         given:
+//         UserServiceMock.userRepository.getOne(1) >> user1
+         UserServiceMock.userRepository.getOne(_ as Long) >> { Long userId -> // if we change the data type it will fail
+             if(userId == 1)
+                 return user1
+             else
+                 throw new IllegalArgumentException("UserId not found")
+         }
+
+        when:
+        def resultUser = UserServiceMock.getUserById(1)
 
         then:
-        UserServiceMock.checkExistUser(user2)
-      //  UserServiceMock.checkExistUser(user2)
+        resultUser == user1
 
-    }*/
+        when:
+        def resultUser1 = UserServiceMock.getUserById(2)
+
+        then:
+        resultUser1 = thrown(IllegalArgumentException)
+        resultUser1.message == "UserId not found"
+    }
+
+    def "Check get user by Name"(){
+        given:
+//         UserServiceMock.userRepository.getOne(1) >> user1
+        UserServiceMock.userRepository.findByUserName(_ as String) >> { String str ->
+            if(str.equals("Divya"))
+                return user1
+            else
+                throw new MissingMethodException("UserName Not found", User,null)
+        }
+
+        when:
+        def resultUser = UserServiceMock.getUserByName("Divya")
+
+        then:
+        resultUser == user1
+        resultUser.getUserName().equals("Divya")
+
+        when:
+        def resultUser1 = UserServiceMock.getUserById("Sri")
+
+        then:
+        thrown(MissingMethodException)
+    }
 
     @Unroll
-    def "CheckExistUser"() {
+    def "CheckExistUser for duplicate Username and unique"() {
 
-        given:
-//        User user5 = new User(5,userName,"Tt@123",1,userDetails)
+        given:"If UserName 'Divya' present in repository"
         User user5 = new User()
         user5.setUserName(userName)
+      //  UserServiceMock.userRepository.findByUserName("Divya") >> user6
+        UserServiceMock.userRepository.findByUserName(_ as String) >> { String str ->
+            if(str.equals("Divya"))
+                return user1
+            else
+                return null
+        }
 
-        when:
+        when:"Checking the user name exists or not"
         def res=UserServiceMock.checkExistUser(user5)
 
         then:
@@ -62,7 +108,7 @@ class UserServiceImplSpec extends Specification {
 
         where:
         userName | expected
-        "Divya"  | false
+        "Divya"  | true
         "Bala"   | false
         "Sri"    | false
     }
@@ -70,60 +116,43 @@ class UserServiceImplSpec extends Specification {
     def "Should return a user"(){
 
         given:
-        UserServiceMock.userRepository.save(user) >> user
         UserServiceMock.userRepository.save(user1) >> user1
+        UserServiceMock.userRepository.save(user2) >> user2
 
         when:
-        def result= UserServiceMock.userRepository.save(user)
+        def result= UserServiceMock.userRepository.save(user1)
 
         then:
-        UserServiceMock.userRepository.save(user)==user
+        UserServiceMock.userRepository.save(user1)==user1
         result.getUserName().equals("Divya")
 
         when:
-        User result1= UserServiceMock.userRepository.save(user1)
+        User result1= UserServiceMock.userRepository.save(user2)
 
         then:
-        result1==user1
+        result1==user2
     }
 
     def "Save User interaction"(){
 
         when:
-        UserServiceMock.saveUser(user)
+        UserServiceMock.saveUser(user1)
 
         then:
-        1 * UserServiceMock.userRepository.save(user)
+        1 * UserServiceMock.userRepository.save(user1)
 
     }
 
-    def "Check Exist User duplicate"(){
-        given:
-        UserServiceMock.checkExistUser(_ as User) >> { User u1 ->
-            if (UserServiceMock.userRepository.findByUserName(_)==null)
-                return true
-            else
-                return false
-        }
-
+    def "Check interactions - Check Exist User"(){
         when:
-        def res=UserServiceMock.checkExistUser(user)
-
-        then:
-        res==true
-    }
-
-    def "Check User interaction"(){
-        when:
-        UserServiceMock.checkExistUser(user)
+        UserServiceMock.checkExistUser(user1)
 
         then:
         1 * UserServiceMock.userRepository.findByUserName(_)
-//        1 * user.getUserName()
 
     }
 
-    @Unroll
+    /*@Unroll
     def "Check Exist User method returning true for the duplicate UserName"(){
         given:
         userServiceStub.checkExistUser(_ as User) >> { User u1 ->
@@ -155,5 +184,5 @@ class UserServiceImplSpec extends Specification {
         notThrown(IllegalArgumentException)
 
 
-    }
+    }*/
 }

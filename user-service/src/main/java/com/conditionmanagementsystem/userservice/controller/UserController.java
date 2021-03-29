@@ -6,20 +6,21 @@ import com.conditionmanagementsystem.userservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 public class UserController {
-    @Autowired
+//    @Autowired
     private UserService userService;
 
-    @Autowired
+//    @Autowired
     private HeaderGenerator headerGenerator;
+
+    public UserController(UserService userService, HeaderGenerator headerGenerator){
+        this.userService = userService;
+        this.headerGenerator = headerGenerator;}
 
     @GetMapping(value = "/users")
     public ResponseEntity<List<User>> getAllUsers(){
@@ -61,6 +62,32 @@ public class UserController {
                     HttpStatus.OK);
         }
         return new ResponseEntity<User>(
+                headerGenerator.getHeadersForError(),
+                HttpStatus.NOT_FOUND);
+    }
+
+    @DeleteMapping (value = "/delete-user/{id}")
+    public ResponseEntity<String> deleteUserById(@PathVariable("id") Long id){
+        User user = userService.getUserById(id);
+        if(user != null) {
+            Boolean userDeleteFlag =userService.deleteUserById(id);
+            System.out.println("Delete Flag is - "+userDeleteFlag);
+            if(userDeleteFlag){
+                return new ResponseEntity<String>(
+                        "User "+user.getUserName()+" Deleted",
+                        headerGenerator.
+                                getHeadersForSuccessGetMethod(),
+                        HttpStatus.OK);
+            }
+            else{
+                return new ResponseEntity<String>(
+                        "Cannot Perform Delete - Internal Server Error",
+                        headerGenerator.getHeadersForError(),
+                        HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+        return new ResponseEntity<String>(
+                "User Not Found",
                 headerGenerator.getHeadersForError(),
                 HttpStatus.NOT_FOUND);
     }

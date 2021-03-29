@@ -10,5 +10,5 @@ public interface UserService {
     User getUserByName(String userName);
     Boolean checkExistUser(User user);
     User saveUser(User user);
-
+    Boolean deleteUserById(Long id);
 }

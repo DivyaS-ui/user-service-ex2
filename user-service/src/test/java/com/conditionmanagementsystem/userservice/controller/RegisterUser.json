@@ -1,0 +1,12 @@
+{
+  "userName":"Test_User",
+  "userPassword":"Test@User",
+  "userDetails":{
+    "diagonizedDate":"2009-12-31",
+    "email":"testuser@test.com",
+    "firstName":"Test",
+    "lastName":"User",
+    "patient":"SELF",
+    "diabetesType":["TYPE1","TYPE2"]
+  }
+}

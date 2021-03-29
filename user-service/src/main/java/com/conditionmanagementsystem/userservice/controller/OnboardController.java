@@ -2,6 +2,7 @@ package com.conditionmanagementsystem.userservice.controller;
 
 import com.conditionmanagementsystem.userservice.entity.User;
 import com.conditionmanagementsystem.userservice.http.header.HeaderGenerator;
+import com.conditionmanagementsystem.userservice.repository.UserRepository;
 import com.conditionmanagementsystem.userservice.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,11 +15,15 @@ import javax.servlet.http.HttpServletRequest;
 
 @RestController
 public class OnboardController {
-    @Autowired
+//    @Autowired
     private UserService userService;
 
-    @Autowired
+//    @Autowired
     private HeaderGenerator headerGenerator;
+
+public OnboardController(UserService userService, HeaderGenerator headerGenerator){
+    this.userService = userService;
+    this.headerGenerator = headerGenerator;}
 
     @PostMapping(value = "/registration")
     public ResponseEntity<User> addUser(@RequestBody User user, HttpServletRequest request) {

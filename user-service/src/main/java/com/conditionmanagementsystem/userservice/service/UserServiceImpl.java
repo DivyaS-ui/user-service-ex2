@@ -52,4 +52,14 @@ public class UserServiceImpl implements UserService{
         user.setActive(1);
         return userRepository.save(user);
     }
+
+    @Override
+    public Boolean deleteUserById(Long id) {
+        if(id != null){
+            userRepository.deleteById(id);
+            return true;
+        }
+        else
+            return false;
+    }
 }
