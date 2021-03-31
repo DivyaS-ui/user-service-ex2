@@ -27,16 +27,15 @@ public OnboardController(UserService userService, HeaderGenerator headerGenerato
 
     @PostMapping(value = "/registration")
     public ResponseEntity<User> addUser(@RequestBody User user, HttpServletRequest request) {
-        if (user != null)
+        if (user != null) {
             try {
-                if(!(userService.checkExistUser(user))) {
+                if (!(userService.checkExistUser(user))) {
                     userService.saveUser(user);
                     return new ResponseEntity<User>(
                             user,
                             headerGenerator.getHeadersForSuccessPostMethod(request, user.getId()),
                             HttpStatus.CREATED);
-                }
-                else{
+                } else {
                     return new ResponseEntity<User>(headerGenerator.getHeadersForError(),
                             HttpStatus.CONFLICT);
                 }
@@ -44,6 +43,8 @@ public OnboardController(UserService userService, HeaderGenerator headerGenerato
                 e.printStackTrace();
                 return new ResponseEntity<User>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
-        return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
+        }
+        else{
+            return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);}
     }
 }

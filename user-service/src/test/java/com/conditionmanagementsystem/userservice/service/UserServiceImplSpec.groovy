@@ -8,7 +8,8 @@ import spock.lang.Unroll
 
 class UserServiceImplSpec extends Specification {
 
-        UserDetails userDetails = Stub()
+//        UserDetails userDetails = Stub()
+    UserDetails userDetails = new UserDetails()
 
         User user1 = new User(1, "Divya", "Test123", 1, userDetails)
         User user2 = new User(2, "Bala", "Test123", 1, userDetails)
@@ -25,18 +26,25 @@ class UserServiceImplSpec extends Specification {
     }
 
     def "Check get all users"(){
-       /* given:
-        UserServiceMock.userRepository.findAll() >> [user1,user2,user3]*/
+        given:
+        UserServiceMock.userRepository.findAll() >> [user1,user2,user3]
 
         when:
         def users = UserServiceMock.getAllUsers()
 
         then:
-        1*UserServiceMock.userRepository.findAll() >> [user1,user2,user3]
-        users == [user1,user2,user3]
+        1*UserServiceMock.userRepository.findAll() //>> [user1,user2,user3]
+       // users == [user1,user2,user3]
 
+
+        when:
+        def usersList =UserServiceMock.getAllUsers()
+
+        then:
+        usersList == [user1,user2,user3]
     }
 
+    @Unroll
     def "Check get user by Id"(){
          given:
 //         UserServiceMock.userRepository.getOne(1) >> user1
@@ -54,11 +62,17 @@ class UserServiceImplSpec extends Specification {
         resultUser == user1
 
         when:
-        def resultUser1 = UserServiceMock.getUserById(2)
+        def resultUser1 = UserServiceMock.getUserById(userId)
 
         then:
-        resultUser1 = thrown(IllegalArgumentException)
+//        thrown(expected)
+        resultUser1 = thrown(expected)
         resultUser1.message == "UserId not found"
+
+        where:
+        userId | expected
+        2       |IllegalArgumentException
+        3       |IllegalArgumentException
     }
 
     def "Check get user by Name"(){
@@ -68,7 +82,7 @@ class UserServiceImplSpec extends Specification {
             if(str.equals("Divya"))
                 return user1
             else
-                throw new MissingMethodException("UserName Not found", User,null)
+                throw new MissingMethodException("UserName Not found", User,null) //
         }
 
         when:
@@ -100,11 +114,11 @@ class UserServiceImplSpec extends Specification {
         }
 
         when:"Checking the user name exists or not"
-        def res=UserServiceMock.checkExistUser(user5)
+        def result=UserServiceMock.checkExistUser(user5)
 
         then:
         UserServiceMock.checkExistUser(user5) >> expected
-        res== expected
+        result== expected
 
         where:
         userName | expected
@@ -150,6 +164,24 @@ class UserServiceImplSpec extends Specification {
         then:
         1 * UserServiceMock.userRepository.findByUserName(_)
 
+    }
+
+    def "Check Delete User"(){
+
+        /*given:
+        UserServiceMock.deleteUserById(userId) >> { Long id ->
+            return id == 1
+        }*/
+        when:
+        def deleteSuccessFlag= UserServiceMock.deleteUserById(userId)
+
+        then:
+        deleteSuccessFlag == expected
+
+        where:
+        userId  | expected
+        1       | true
+        null    | false
     }
 
     /*@Unroll

@@ -45,6 +45,4 @@ public class UserDetails {
     @JsonIgnore
     private User user;
 
-
-
 }

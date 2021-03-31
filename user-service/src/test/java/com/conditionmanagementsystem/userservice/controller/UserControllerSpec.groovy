@@ -36,6 +36,16 @@ class UserControllerSpec extends Specification {
         UserControllerMock = new UserController(userService,headerGenerator)
         this.mockMvc = MockMvcBuilders.standaloneSetup(UserControllerMock).build()
 
+        userDetails.setId(2)
+        userDetails.setFirstName("Test")
+        userDetails.setLastName("User")
+        userDetails.setEmail("testuser@test.com")
+        userDetails.setPatient("SELF" as Diabetes)
+        /*Date myDate = new Date(2009,12,31)
+        userDetails.setDiagonizedDate(Date)*/ //Date type
+        userDetails.setDiabetesType([DiabetesTypes.TYPE1,DiabetesTypes.TYPE2])
+        User user1 = new User(1, "Divya", "Test123", 1, userDetails)
+
     }
 
     def "GetAllUsers"() {
@@ -59,15 +69,7 @@ class UserControllerSpec extends Specification {
         given:
         /*List<User> users = [user1,user2,user3]
         UserControllerMock.userService.getAllUsers >> users*/
-        userDetails.setId(2)
-        userDetails.setFirstName("Test")
-        userDetails.setLastName("User")
-        userDetails.setEmail("testuser@test.com")
-        userDetails.setPatient("SELF" as Diabetes)
-        /*Date myDate = new Date(2009,12,31)
-        userDetails.setDiagonizedDate(Date)*/ //Date type
-        userDetails.setDiabetesType([DiabetesTypes.TYPE1,DiabetesTypes.TYPE2])
-        User user1 = new User(1, "Divya", "Test123", 1, userDetails)
+
 //        userDetails.setUser(user1)
         UserControllerMock.userService.getUserById(1) >> user1
 

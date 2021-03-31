@@ -9,8 +9,12 @@ import com.conditionmanagementsystem.userservice.repository.UserRepository
 import com.conditionmanagementsystem.userservice.service.UserService
 import com.conditionmanagementsystem.userservice.service.UserServiceImpl
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectWriter
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import spock.lang.Specification
 
 import javax.servlet.http.HttpServletRequest
@@ -20,56 +24,91 @@ import java.sql.Date
  * Unit test for the OnboardController.
  */
 class OnboardControllerSpec extends Specification {
-    UserServiceImpl userServiceImplMock = Mock()
-    OnboardController onboardControllerMock = Mock()
 
-
-    User user1 =Stub()
-    //HttpServletRequest httpRequest = new HttpServletRequest()
     @Autowired
     private MockMvc mockMvc
 
-    def OnboardControllerMock1
+    def OnboardControllerMock
+    UserDetails userDetails= new UserDetails();
+    User user = new User(1,"Test_User","Test@User",1,userDetails)
+
+    ObjectMapper mapper=new ObjectMapper();
+    ObjectWriter objectWriter = mapper.writer().withDefaultPrettyPrinter();
 
     void setup() {
-        OnboardControllerMock1 = new OnboardController()
-        OnboardControllerMock1.userService= Mock(UserService)
-        OnboardControllerMock1.headerGenerator= Mock(HeaderGenerator)
+        UserService userService = Mock()
+        HeaderGenerator headerGenerator = Mock()
+        OnboardControllerMock = new OnboardController(userService,headerGenerator)
+        this.mockMvc = MockMvcBuilders.standaloneSetup(OnboardControllerMock).build()
+
+
+        //    String jsonString=mapperwriteValueAsString(mapper.readValue(new File("src/test/java/com/conditionmanagementsystem/userservice/controller/RegisterUser.json" as File,Object.class)));
+
     }
 
-    def "Check AddUser"() {
+    def "Check AddUser - 201"() {
         given:
-        UserDetails userDetails= new UserDetails();
-        userDetails.setFirstName("Test")
-        userDetails.setLastName("User")
-        userDetails.setEmail("testuser@test.com")
-        userDetails.setPatient("SELF" as Diabetes)
-        userDetails.setDiagonizedDate("2009-12-31" as Date)
-        userDetails.setDiabetesType(["TYPE1", "TYPE2"] as List<DiabetesTypes>)
+        String requestJson = objectWriter.writeValueAsString(user);
 
-        User user = new User(1,"Test_User","Test@User",1,userDetails)
+        OnboardControllerMock.userService.checkExistUser(_ as User) >> false
+        OnboardControllerMock.userService.saveUser(_ as User) >> user
 
-       /* ObjectMapper mapper=new ObjectMapper();
-        String jsonString=mapperwriteValueAsString(mapper.readValue(new File("src/test/java/com/conditionmanagementsystem/userservice/controller/RegisterUser.json" as File,Object.class)));
+        when:
+        def result= mockMvc.perform(MockMvcRequestBuilders.post("/registration").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8)).andReturn().response
 
-*/
+        then:
+        result.getStatus()==201
+
     }
-   /* def "shouldn't AddUser for duplicate user"() {
+
+    def "Check AddUser - CONFLICT 409"() {
         given:
-        userServiceImplMock.checkExistUser(_ as User) >> true
-        onboardControllerMock.addUser(_ as User,_ as HttpServletRequest) >> {
-            if(userServiceImplMock.checkExistUser(_ as User))
-                throw new IllegalArgumentException("Duplicate UserName")
+        String requestJson = objectWriter.writeValueAsString(user);
+
+        OnboardControllerMock.userService.checkExistUser(_ as User) >> true
+        OnboardControllerMock.userService.saveUser(_ as User) >> user
+
+        when:
+        def result= mockMvc.perform(MockMvcRequestBuilders.post("/registration").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8)).andReturn().response
+
+        then:
+        result.getStatus()==409
+
+    }
+
+    def "Check AddUser - INTERNAL SERVER ERROR 500"() {
+        given:
+        String requestJson = objectWriter.writeValueAsString(user);
+
+        OnboardControllerMock.userService.checkExistUser(_ as User) >> false
+        OnboardControllerMock.userService.saveUser(_ as User) >>{ User u1 ->
+            if(u1.getUserName().equals("Test_User"))
+                throw new IllegalArgumentException("Couldn't Save this User")
             else
-                return false
+                return u1
         }
 
-        when: "Registering with unique userName"
-        onboardControllerMock.addUser(user1,_ as HttpServletRequest)
+        when:
+        def result= mockMvc.perform(MockMvcRequestBuilders.post("/registration").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8)).andReturn().response
 
-        then:"Should throw Exception"
-        def e = thrown(IllegalArgumentException)
-        e.message == "Duplicate UserName"
+        then:
+        result.getStatus()==500
 
-    }*/
+    }
+    def "Check AddUser - BAD REQUEST 400"() {
+        given:
+        User emptyUser=null;
+        String requestJson = objectWriter.writeValueAsString(emptyUser);
+/*
+        OnboardControllerMock.userService.checkExistUser(_ as User) >> true
+        OnboardControllerMock.userService.saveUser(_ as User) >> emptyUser*/
+
+        when:
+        def result= mockMvc.perform(MockMvcRequestBuilders.post("/registration").content(requestJson).contentType(MediaType.APPLICATION_JSON_UTF8)).andReturn().response
+
+        then:
+        result.getStatus()==400
+
+    }
+
 }
